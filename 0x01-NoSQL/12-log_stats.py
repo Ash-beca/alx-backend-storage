@@ -1,28 +1,38 @@
 #!/usr/bin/env python3
-"""Module summerizes nginx log database
 """
+Provide statistics about Nginx logs stored in MongoDB
+"""
+
 from pymongo import MongoClient
 
-if __name__ == "__main__":
-    client = MongoClient("mongodb://127.0.0.1:27017")
-    nginx_collection = client.logs.nginx
 
-    logs_count = nginx_collection.count_documents({})
+def nginx_logs_stats(mongo_collection):
+    """
+    Display statistics about Nginx logs stored in MongoDB
+    """
+    # Number of documents in the collection
+    total_logs = mongo_collection.count_documents({})
+    print(f"{total_logs} logs")
+
+    # Methods
     methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
-
-    print("{:d} logs".format(logs_count))
     print("Methods:")
     for method in methods:
-        print(
-            "\tmethod {:s}: {:d}".format(
-                method,
-                nginx_collection.count_documents(
-                    {"method": method}
-                )
-            )
-        )
-    print(
-        "{:d} status check".format(
-            nginx_collection.count_documents({"path": "/status"})
-        )
+        count = mongo_collection.count_documents({"method": method})
+        print(f"\tmethod {method}: {count}")
+
+    # Number of documents with method=GET and path=/status
+    count_status = mongo_collection.count_documents(
+        {"method": "GET", "path": "/status"}
     )
+    print(f"{count_status} status check")
+
+
+if __name__ == "__main__":
+    # Connect to MongoDB
+    client = MongoClient('mongodb://127.0.0.1:27017')
+    logs_db = client.logs
+    nginx_collection = logs_db.nginx
+
+    # Display statistics
+    nginx_logs_stats(nginx_collection)
